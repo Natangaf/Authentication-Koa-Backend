@@ -1,7 +1,7 @@
 {
   "name": "natanga-test",
   "version": "1.0.0",
-  "description": "Caveo Test - Node.js with Koa.js and AWS Cognito",
+  "description": "Natanga Test - Node.js with Koa.js and AWS Cognito",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
