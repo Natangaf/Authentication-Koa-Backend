@@ -11,14 +11,16 @@ export class User {
   @Column({ unique: true, length: 255 })
   email: string;
 
+  @Column({ length: 50 })
+  role: string;
 
   @Column({ default: false })
   isOnboarded: boolean;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
 
-  @UpdateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP', onUpdate: 'CURRENT_TIMESTAMP' })
+  @UpdateDateColumn({ type: 'timestamp'})
   updatedAt: Date;
 
   @DeleteDateColumn({ type: 'timestamp', nullable: true })
@@ -28,6 +30,7 @@ export class User {
     this.id = id;
     this.name = name;
     this.email = email;
+    this.role = role;
     this.isOnboarded = isOnboarded;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;

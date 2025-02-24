@@ -1,4 +1,4 @@
-import { AppDataSource } from "../data-source";
+import { AppDataSource } from "../configs/data-source";
 import { User } from "../entities/User";
 import { UserDTO } from "../dtos/UserDTO";
 import {

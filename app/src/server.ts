@@ -1,13 +1,15 @@
 import "reflect-metadata";
-import { AppDataSource } from "./data-source";
+import { AppDataSource } from "./configs/data-source";
 import app from "./app";
+import { seedAdminUser } from "./configs/seedAdminUser";
 const PORT = process.env.PORT || 3000;
 
 AppDataSource.initialize()
-
-  .then(() => {
-
+  .then(async () => {
     console.log("database connected.");
+
+    await seedAdminUser();
+    
     app.listen(PORT, () => {
       console.log(`Server running in port ${PORT}`);
     });

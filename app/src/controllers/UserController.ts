@@ -1,5 +1,7 @@
 import { Context } from "koa";
 import { UserService } from "../services/UserService";
+import { adminMiddleware } from "../middlewares/adminMiddleware";
+import { authMiddleware } from "../middlewares/authMiddleware";
 
 const userService = new UserService();
 
@@ -11,53 +13,66 @@ export class UserController {
    */
   static async authUser(ctx: Context) {
     try {
-      const { email, password } = ctx.request.body;
+      const { email, password, name, role } = ctx.request.body;
 
       if (!email || !password) {
         ctx.status = 400;
         ctx.body = { error: "Email e senha são obrigatórios" };
         return;
       }
-      // Passo 1: Verifica se existe no banco local
+
       const userInDatabase = await userService.findByEmail(email);
+
+      let definitiveRole = role?.toLowerCase();
+
+      if (definitiveRole !== "admin" && definitiveRole !== "user") {
+        definitiveRole = "user";
+      }
+
       if (userInDatabase) {
-        // Passo 2 : se  existir Tenta autenticar no Cognito
         const authenticate = await userService.authenticateUser(
           email,
           password
         );
-        // Retona
+
         return (ctx.body = {
           message: "Autenticação bem-sucedida",
           user: userInDatabase,
           token: authenticate.accessToken,
         });
       } else {
-        // Usuário não existe no Cognito → Cadastra
-        await userService.signUpUser(email, password);
-        // const authenticate = await userService.authenticateUser(
-        //   email,
-        //   password
-        // );
+        if (definitiveRole === "admin") {
+          const user = ctx.state.user;
 
-        const newUser = { email};
+          if (!user || !user.role || user.role !== "admin") {
+            ctx.status = 403;
+            ctx.body = {
+              message: "Usuário não tem permissão para criar um admin.",
+            };
+            return;
+          }
+        }
+
+        // Cria o novo usuário
+        const newUser = { email, name, role: definitiveRole };
         const createdUser = await userService.createUser(newUser);
+
+        // Registra no Cognito
+        await userService.signUpUser(email, password);
 
         return (ctx.body = {
           message: "Usuário registrado e autenticado",
           user: createdUser,
-         // token: authenticate.accessToken,
         });
       }
     } catch (error) {
-      // Passo 4: Tratamento genérico de erros
-      if (error instanceof Error) {
-        ctx.status = 401;
-        ctx.body = { error: "Erro na autenticação: " + error.message };
-      } else {
-        ctx.status = 500;
-        ctx.body = { error: "Erro inesperado" };
-      }
+      // Tratamento de erros
+      ctx.status = 500;
+      ctx.body = {
+        error:
+          "Erro inesperado: " +
+          (error instanceof Error ? error.message : "Erro desconhecido"),
+      };
     }
   }
 
@@ -111,6 +126,12 @@ export class UserController {
       const id = Number(ctx.params.id);
       const { name, role } = ctx.request.body;
 
+      let definitiveRole: string | undefined = role?.toLowerCase();
+
+      if (definitiveRole !== "admin" && definitiveRole !== "user") {
+        definitiveRole = "user";
+      }
+
       let userToUpdate = await userService.findByEmail(email);
       if (!userToUpdate) {
         ctx.status = 404;
@@ -137,13 +158,13 @@ export class UserController {
         return;
       }
 
-      if (!isAdmin && role) {
+      if (!isAdmin && definitiveRole) {
         ctx.status = 400;
         ctx.body = { message: "Usuário comum não pode alterar a role" };
         return;
       }
 
-      if (isAdmin && role && userToUpdate.id === id) {
+      if (isAdmin && definitiveRole && userToUpdate.id === id) {
         ctx.status = 400;
         ctx.body = { message: "Admin não pode alterar sua própria role" };
         return;
@@ -153,7 +174,7 @@ export class UserController {
         name?: string;
         role?: string;
         isOnboarded?: boolean;
-      } = { name, role };
+      } = { name,  role: definitiveRole  };
 
       if (userToUpdate.id === id) {
         updateData.isOnboarded = true;
