@@ -17,8 +17,8 @@ export const seedAdminUser = async () => {
   if (!existingAdmin) {
     try {
       // Tenta criar o usuário no Cognito
-      await userService.signUpUser(email, password);
-      
+      await userService.signUpUser(email, password, "admin");
+
       // Se a criação no Cognito for bem-sucedida, cria o usuário no banco de dados
       const adminUser = userRepository.create({
         name,
@@ -27,7 +27,7 @@ export const seedAdminUser = async () => {
         isOnboarded: true,
       });
 
-      await userRepository.save(adminUser);
+      //await userRepository.save(adminUser);
       console.log("Usuário admin criado com sucesso!");
     } catch (error) {
       console.error("Erro ao criar o usuário admin:", error);

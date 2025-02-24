@@ -58,7 +58,7 @@ export class UserController {
         const createdUser = await userService.createUser(newUser);
 
         // Registra no Cognito
-        await userService.signUpUser(email, password);
+        await userService.signUpUser(email, password, definitiveRole);
 
         return (ctx.body = {
           message: "Usuário registrado e autenticado",
@@ -158,13 +158,13 @@ export class UserController {
         return;
       }
 
-      if (!isAdmin && definitiveRole) {
+      if (!isAdmin && role) {
         ctx.status = 400;
         ctx.body = { message: "Usuário comum não pode alterar a role" };
         return;
       }
 
-      if (isAdmin && definitiveRole && userToUpdate.id === id) {
+      if (isAdmin && role && userToUpdate.id === id) {
         ctx.status = 400;
         ctx.body = { message: "Admin não pode alterar sua própria role" };
         return;
@@ -174,7 +174,7 @@ export class UserController {
         name?: string;
         role?: string;
         isOnboarded?: boolean;
-      } = { name,  role: definitiveRole  };
+      } = { name, role: definitiveRole };
 
       if (userToUpdate.id === id) {
         updateData.isOnboarded = true;

@@ -7,19 +7,20 @@ import {
   GetUserCommand,
   AuthFlowType,
   SignUpCommand,
-  AdminConfirmSignUpCommand,
+  AdminUpdateUserAttributesCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import crypto from "crypto";
+import { log } from "console";
 
 const clientId = process.env.CLIENT_ID || "";
 const clientSecret = process.env.CLIENT_SECRET || "";
-const userPoolId = process.env.CLIENT_SECRET || "";
+const userPoolId = process.env.USER_POOL_ID || "";
 
 const cognitoClient = new CognitoIdentityProviderClient({
   region: process.env.REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
   },
 });
 
@@ -34,9 +35,43 @@ export class UserService {
     const user = await this.userRepository.findOneBy({ id });
     if (!user) return null;
 
+    // Atualiza o banco de dados local
     Object.assign(user, data);
+    await this.userRepository.save(user);
 
-    return await this.userRepository.save(user);
+    try {
+      const userAttributes = [];
+
+      if (data.name) {
+        userAttributes.push({ Name: "name", Value: data.name });
+      }
+      if (data.role) {
+        userAttributes.push({ Name: "custom:role", Value: data.role });
+      }
+
+      userAttributes.push({
+        Name: "custom:isOnboarded",
+        Value: "true",
+      });
+
+      if (userAttributes.length > 0) {
+        const updateParams = {
+          UserPoolId: userPoolId,
+          Username: user.email,
+          UserAttributes: userAttributes,
+        };
+
+        // Use o comando correto
+        const command = new AdminUpdateUserAttributesCommand(updateParams);
+        await cognitoClient.send(command);
+        console.log("Usuário atualizado no Cognito com sucesso!");
+      }
+
+      return user;
+    } catch (error) {
+      console.error("Erro ao atualizar usuário no Cognito:", error);
+      throw new Error("Falha ao atualizar usuário no Cognito");
+    }
   }
 
   async authenticateUser(
@@ -91,7 +126,6 @@ export class UserService {
         throw new Error("ID Token não encontrado na resposta do Cognito");
       }
     } catch (error) {
-
       if (error instanceof Error) {
         throw new Error("Erro ao autenticar no Cognito: " + error.message);
       } else {
@@ -100,7 +134,7 @@ export class UserService {
     }
   }
 
-  async signUpUser(email: string, password: string) {
+  async signUpUser(email: string, password: string, role: string) {
     const secretHash = crypto
       .createHmac("sha256", clientSecret)
       .update(email + clientId)
@@ -111,12 +145,17 @@ export class UserService {
       Username: email,
       Password: password,
       SecretHash: secretHash,
-      UserAttributes: [{ Name: "email", Value: email }],
+      UserAttributes: [
+        { Name: "email", Value: email },
+        { Name: "custom:role", Value: role },
+      ],
     };
     try {
       // Criar usuário no Cognito
       const signUpCommand = new SignUpCommand(signUpParams);
+      
       await cognitoClient.send(signUpCommand);
+
       console.log("Usuário criado com sucesso!");
 
       // // Confirmar usuário automaticamente (requer credenciais de admin)
