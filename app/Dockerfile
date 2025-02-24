@@ -5,10 +5,10 @@ FROM node:20.17
 WORKDIR /app
 
 # Copia apenas os arquivos essenciais para a instalação das dependências
-COPY package*.json tsconfig.json ./
+COPY package*.json tsconfig.json ./ 
 
-# Instala as dependências com cache otimizado
-RUN npm ci --only=production
+# Instala todas as dependências (incluindo dev)
+RUN npm ci
 
 # Copia o restante do código
 COPY . .
