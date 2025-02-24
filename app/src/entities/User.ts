@@ -11,7 +11,7 @@ export class User {
   @Column({ unique: true, length: 255 })
   email: string;
 
-  @Column({ length: 50 })
+  @Column({ length: 50, default: "user" })
   role: string;
 
   @Column({ default: false })
