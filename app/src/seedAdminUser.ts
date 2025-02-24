@@ -27,7 +27,7 @@ export const seedAdminUser = async () => {
         isOnboarded: true,
       });
 
-      //await userRepository.save(adminUser);
+      await userRepository.save(adminUser);
       console.log("Usuário admin criado com sucesso!");
     } catch (error) {
       console.error("Erro ao criar o usuário admin:", error);
