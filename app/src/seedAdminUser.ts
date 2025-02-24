@@ -1,6 +1,6 @@
 import { AppDataSource } from "./data-source";
-import { User } from "../entities/User";
-import { UserService } from "../services/UserService";
+import { User } from "./entities/User";
+import { UserService } from "./services/UserService";
 
 const userService = new UserService();
 

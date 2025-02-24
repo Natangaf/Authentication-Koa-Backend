@@ -1,25 +1,9 @@
 import Router from 'koa-router';
-import { koaSwagger } from 'koa2-swagger-ui'; // Usar o pacote correto para Koa
-import YAML from 'yamljs';
 import { UserController } from '../controllers/UserController';
 import { authMiddleware } from '../middlewares/authMiddleware';
 import { adminMiddleware, crateAdminMiddleware } from '../middlewares/adminMiddleware';
-import path from 'path';
-
-const swaggerDocument = YAML.load(path.join(__dirname, '.', 'configs', 'swagger.yaml'));
 
 const router = new Router();
-
-// Configuração do Swagger UI para Koa
-router.get(
-  '/docs',
-  koaSwagger({
-    routePrefix: false, 
-    swaggerOptions: {
-      spec: swaggerDocument, 
-    },
-  }),
-);
 
 
 // Rota pública para autenticação

@@ -1,7 +1,7 @@
 import "reflect-metadata";
-import { AppDataSource } from "./configs/data-source";
+import { AppDataSource } from "./data-source";
 import app from "./app";
-import { seedAdminUser } from "./configs/seedAdminUser";
+import { seedAdminUser } from "./seedAdminUser";
 const PORT = process.env.PORT || 3000;
 
 AppDataSource.initialize()
